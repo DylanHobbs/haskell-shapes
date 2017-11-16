@@ -9,7 +9,8 @@ import qualified Text.Blaze.Svg11 as S
 import qualified Text.Blaze.Svg11.Attributes as SVGA
 import Text.Blaze.Svg11 ((!), mkPath, rotate, l, m)
 import Text.Blaze.Svg.Renderer.Text (renderSvg)
-
+import Shapes
+import Ansi
 import Data.Text.Lazy
 import Text.Blaze.Html5 (toHtml)
 
@@ -20,22 +21,10 @@ beamMeUpScotty = scotty 3000 $ do
 
   get (literal "/greet/") $ html "Oh, wow!"
 
-  get "/greet/:name" $ do
-      name <- param "name"
-      html $ longresponse name
-  get "/circle/:colour" $ do
+  get "/svg/circle/:colour" $ do
       colour <- param "colour"
       html $ makeCircle colour
 
-response :: Text -> Text
-response n = R.renderHtml $ H.h1 ("Hello " >> H.toHtml n)
-
-longresponse :: Text -> Text
-longresponse n = R.renderHtml $
-  do H.head $ H.title "Welcome page"
-     H.body $
-       do H.h1 "Welcome!"
-          H.p ("Welcome to my Scotty app" >> H.toHtml n)
 
 sillyPrint = print "boo"
 
@@ -52,6 +41,15 @@ svgDoc = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "150" ! SVGA.height "100
      S.rect ! SVGA.width "1" ! SVGA.height "2" ! SVGA.fill "#ffffff"
      S.rect ! SVGA.width "1" ! SVGA.height "2" ! SVGA.fill "#d2232c"
      S.path ! SVGA.d makePath
+
+svgColour :: Colour -> S.Svg
+svgColour colour = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "150" ! SVGA.height "100" ! SVGA.viewbox "0 0 3 2" $ S.g $
+  do S.rect ! SVGA.width "1" ! SVGA.height "2" ! SVGA.fill "#008d46"
+     S.rect ! SVGA.width "1" ! SVGA.height "2" ! SVGA.fill "#ffffff"
+     S.rect ! SVGA.width "1" ! SVGA.height "2" ! SVGA.fill "#d2232c"
+     S.path ! SVGA.d makePath
+
+
 
 makePath :: S.AttributeValue
 makePath = mkPath $ do

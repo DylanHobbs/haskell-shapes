@@ -5,12 +5,25 @@ module Shapes(
   identity, translate, rotate, scale, (<+>),
   inside)  where
 
+import qualified Text.Blaze.Svg11 as S
+import qualified Text.Blaze.Internal as I
+import qualified Text.Blaze.Svg11.Attributes as A
+import Data.Colour.SRGB
+import Text.Printf (printf)
+import Text.Blaze.Svg11 ((!))
 
 -- Utilities
+data Style = StrokeWidth Double
+--           | StrokeColour Int Int Int
+           | FillColour Int Int Int
+        deriving (Show, Read)
 
 data Vector = Vector Double Double
               deriving Show
+
 vector = Vector
+
+type Shading = Float
 
 cross :: Vector -> Vector -> Double
 cross (Vector a b) (Vector a' b') = a * a' + b * b'
@@ -58,7 +71,6 @@ data Transform = Identity
            | Scale Vector
            | Compose Transform Transform
            | Rotate Matrix
-           | Colour
              deriving Show
 
 identity = Identity
@@ -75,29 +87,45 @@ transform (Rotate m)                 p = (invert m) `mult` p
 transform (Compose t1 t2)            p = transform t2 $ transform t1 p
 
 
-
 -- Drawings
 
-type Drawing = [(Transform,Shape)]
+type Drawing = [(Style,Transform,Shape)]
+
+colourAttrVal :: Int -> Int -> Int -> S.AttributeValue
+colourAttrVal r g b = I.stringValue $ sRGB24show $ sRGBBounded r g b
+
+strokeWidthAttrVal :: Double -> S.AttributeValue
+strokeWidthAttrVal d = I.stringValue $ show d
 
 -- interpretation function for drawings
 
 inside :: Point -> Drawing -> Bool
 inside p d = or $ map (inside1 p) d
 
-inside1 :: Point -> (Transform, Shape) -> Bool
-inside1 p (t,s) = insides (transform t p) s
+inside1 :: Point -> (Style, Transform, Shape) -> Bool
+inside1 p (st,t,s) = insides (transform t p) s
 
 insides :: Point -> Shape -> Bool
 p `insides` Empty = False
 p `insides` Circle = distance p <= 1
 p `insides` Square = maxnorm  p <= 1
 
-
 distance :: Point -> Double
 distance (Vector x y ) = sqrt ( x**2 + y**2 )
 
 maxnorm :: Point -> Double
 maxnorm (Vector x y ) = max (abs x) (abs y)
+
+createAttrib :: Style -> S.Attribute
+createAttrib (FillColour r g b) =   A.fill $ colourAttrVal r g b
+createAttrib (StrokeWidth d)    =   A.strokeWidth $ strokeWidthAttrVal d
+
+createShapeAttrib :: Shape -> S.Svg
+createShapeAttrib Empty = S.rect ! A.r (I.stringValue "0")
+createShapeAttrib Circle = S.circle ! A.r (I.stringValue "2")
+createShapeAttrib Square = S.rect ! A.width (I.stringValue "1") ! A.height (I.stringValue "2")
+
+toSvg :: Drawing -> S.Svg
+toSvg [(style, transform, shape)] = 
 
 testShape = (scale (point 10 10), circle)
