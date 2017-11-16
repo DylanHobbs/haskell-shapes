@@ -125,7 +125,11 @@ createShapeAttrib Empty = S.rect ! A.r (I.stringValue "0")
 createShapeAttrib Circle = S.circle ! A.r (I.stringValue "2")
 createShapeAttrib Square = S.rect ! A.width (I.stringValue "1") ! A.height (I.stringValue "2")
 
+genSvgStuff :: Drawing -> [S.Attribute]
+genSvgStuff [] = []
+genSvgStuff ((style, trans, shape):ds) = createAttrib style : genSvgStuff ds
+
 toSvg :: Drawing -> S.Svg
-toSvg [(style, transform, shape)] = 
+toSvg d@[(style, trans, shape)] = foldl (!) (createShapeAttrib shape) $ genSvgStuff d
 
 testShape = (scale (point 10 10), circle)
