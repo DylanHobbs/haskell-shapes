@@ -11,7 +11,7 @@ import Text.Blaze.Svg11 ((!), mkPath, rotate, l, m)
 import Text.Blaze.Svg.Renderer.Text (renderSvg)
 import Shapes
 import Ansi
-import Data.Text.Lazy
+import Data.Text.Lazy (Text)
 import Text.Blaze.Html5 (toHtml)
 
 beamMeUpScotty = scotty 3000 $ do
@@ -25,14 +25,13 @@ beamMeUpScotty = scotty 3000 $ do
       colour <- param "colour"
       html $ makeCircle colour
 
-
 sillyPrint = print "boo"
 
 makeCircle :: Text -> Text
 makeCircle colour = R.renderHtml $
   do H.head $ H.title $ "Circle"
      H.body $
-      H.div $ H.preEscapedToHtml $ renderSvg svgDoc
+      H.div $ H.preEscapedToHtml $ renderSvg svgTest
 
 
 svgDoc :: S.Svg
@@ -42,12 +41,16 @@ svgDoc = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "150" ! SVGA.height "100
      S.rect ! SVGA.width "1" ! SVGA.height "2" ! SVGA.fill "#d2232c"
      S.path ! SVGA.d makePath
 
-svgColour :: Colour -> S.Svg
-svgColour colour = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "150" ! SVGA.height "100" ! SVGA.viewbox "0 0 3 2" $ S.g $
-  do S.rect ! SVGA.width "1" ! SVGA.height "2" ! SVGA.fill "#008d46"
-     S.rect ! SVGA.width "1" ! SVGA.height "2" ! SVGA.fill "#ffffff"
-     S.rect ! SVGA.width "1" ! SVGA.height "2" ! SVGA.fill "#d2232c"
-     S.path ! SVGA.d makePath
+svgTest :: S.Svg
+svgTest = svgHead
+   where svgHead = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "100%" ! SVGA.height "100%" ! SVGA.viewbox "-25 -25 50 50" $ S.g $runTest
+
+--svgColour :: Colour -> S.Svg
+--svgColour colour = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "150" ! SVGA.height "100" ! SVGA.viewbox "0 0 3 2" $ S.g $
+--  do S.rect ! SVGA.width "1" ! SVGA.height "2" ! SVGA.fill "#008d46"
+--     S.rect ! SVGA.width "1" ! SVGA.height "2" ! SVGA.fill "#ffffff"
+--     S.rect ! SVGA.width "1" ! SVGA.height "2" ! SVGA.fill "#d2232c"
+--     S.path ! SVGA.d makePath
 
 
 
