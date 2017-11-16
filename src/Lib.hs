@@ -45,15 +45,12 @@ makeCircle :: Text -> Text
 makeCircle colour = R.renderHtml $
   do H.head $ H.title "Circle"
      H.body $
-      H.div $ H.preEscapedToHtml $ renderSvg svgTest
+      H.div $ H.preEscapedToHtml $ renderSvg svgDoc
 
 
 svgDoc :: S.Svg
-svgDoc = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "150" ! SVGA.height "100" ! SVGA.viewbox "0 0 3 2" $ S.g $
-  do S.rect ! SVGA.width "1" ! SVGA.height "2" ! SVGA.fill "#008d46"
-     S.rect ! SVGA.width "1" ! SVGA.height "2" ! SVGA.fill "#ffffff"
-     S.rect ! SVGA.width "1" ! SVGA.height "2" ! SVGA.fill "#d2232c"
-     S.path ! SVGA.d makePath
+svgDoc = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "150" ! SVGA.height "100" $ S.g $
+  do S.circle ! SVGA.cx "50" ! SVGA.cy "50" ! SVGA.r "50" ! SVGA.fill "#ff0000"
 
 svgTest :: S.Svg
 svgTest = svgHead
