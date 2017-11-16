@@ -57,10 +57,10 @@ svgDoc = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "150" ! SVGA.height "100
 
 svgTest :: S.Svg
 svgTest = svgHead
-   where svgHead = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "500" ! SVGA.height "500" ! SVGA.viewbox "-25 -25 50 50" $ S.g $runTest
+   where svgHead = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "500" ! SVGA.height "500" ! SVGA.viewbox "0 0 3 2" $ S.g $runTest
 
-svgTest1 :: String -> Int -> Int -> Int -> S.Svg
-svgTest1 shape r g b = svgHead ! SVGA.d makePath
+svgTest1 :: String -> Double -> Double -> Double -> S.Svg
+svgTest1 shape r g b = svgHead
    where svgHead = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "500" ! SVGA.height "500" ! SVGA.viewbox "-25 -25 50 50" $ S.g $ gogoGadgetDoit shape r g b
 
 --svgColour :: Colour -> S.Svg

@@ -15,7 +15,7 @@ import Text.Blaze.Svg11 ((!))
 -- Utilities
 data Style = StrokeWidth Double
 --           | StrokeColour Int Int Int
-           | FillColour Int Int Int
+           | FillColour Double Double Double
         deriving (Show, Read)
 
 data Vector = Vector Double Double
@@ -91,8 +91,8 @@ transform (Compose t1 t2)            p = transform t2 $ transform t1 p
 
 type Drawing = [(Style,Transform,Shape)]
 
-colourAttrVal :: Int -> Int -> Int -> S.AttributeValue
-colourAttrVal r g b = I.stringValue $ sRGB24show $ sRGBBounded r g b
+colourAttrVal :: Double -> Double -> Double -> S.AttributeValue
+colourAttrVal r g b = I.stringValue $ sRGB24show $ sRGB r g b
 
 strokeWidthAttrVal :: Double -> S.AttributeValue
 strokeWidthAttrVal d = I.stringValue $ show d
@@ -123,7 +123,7 @@ createAttrib (StrokeWidth d)    =   A.strokeWidth $ strokeWidthAttrVal d
 createShapeAttrib :: Shape -> S.Svg
 createShapeAttrib Empty = S.rect ! A.r (I.stringValue "0")
 createShapeAttrib Circle = S.circle ! A.r (I.stringValue "2")
-createShapeAttrib Square = S.rect ! A.width (I.stringValue "1") ! A.height (I.stringValue "2")
+createShapeAttrib Square = S.rect ! A.width (I.stringValue "10") ! A.height (I.stringValue "10")
 
 genSvgStuff :: Drawing -> [S.Attribute]
 genSvgStuff [] = []
@@ -134,9 +134,9 @@ toSvg d@[(style, trans, shape)] = foldl (!) (createShapeAttrib shape) $ genSvgSt
 
 testShape = (scale (point 10 10), circle)
 
-testFillRect = [(FillColour 66 244 188, scale(point 10 10), square)]
+testFillRect = [(FillColour 0.6 0.1 0.8, scale(point 10 10), square)]
 runTest = toSvg testFillRect
 
 gogoGadgetDoit shape r g b = toSvg s
-  where s = [(FillColour r g b, scale(point 50 50), square)]
+  where s = [(FillColour r g b, identity, square)]
 
