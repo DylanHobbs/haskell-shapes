@@ -133,3 +133,5 @@ toSvg :: Drawing -> S.Svg
 toSvg d@[(style, trans, shape)] = foldl (!) (createShapeAttrib shape) $ genSvgStuff d
 
 testShape = (scale (point 10 10), circle)
+
+testFillRect = (FillColour 10 10 10, scale(point 10 10), square)
