@@ -3,7 +3,7 @@ module Shapes(
   point, getX, getY,
   empty, circle, square,
   identity, translate, rotate, scale, (<+>),
-  inside, toSvg, runTest)  where
+  inside, toSvg, runTest, gogoGadgetDoit)  where
 
 import qualified Text.Blaze.Svg11 as S
 import qualified Text.Blaze.Internal as I
@@ -134,5 +134,9 @@ toSvg d@[(style, trans, shape)] = foldl (!) (createShapeAttrib shape) $ genSvgSt
 
 testShape = (scale (point 10 10), circle)
 
-testFillRect = [(FillColour 10 10 10, scale(point 10 10), square)]
+testFillRect = [(FillColour 66 244 188, scale(point 10 10), square)]
 runTest = toSvg testFillRect
+
+gogoGadgetDoit shape r g b = toSvg s
+  where s = [(FillColour r g b, scale(point 50 50), square)]
+

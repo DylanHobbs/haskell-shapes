@@ -11,7 +11,7 @@ import Text.Blaze.Svg11 ((!), mkPath, rotate, l, m)
 import Text.Blaze.Svg.Renderer.Text (renderSvg)
 import Shapes
 import Ansi
-import Data.Text.Lazy (Text)
+import Data.Text.Lazy (Text,unpack)
 import Text.Blaze.Html5 (toHtml)
 
 beamMeUpScotty = scotty 3000 $ do
@@ -22,14 +22,28 @@ beamMeUpScotty = scotty 3000 $ do
   get (literal "/greet/") $ html "Oh, wow!"
 
   get "/svg/circle/:colour" $ do
+      let shape = "Circle"
       colour <- param "colour"
       html $ makeCircle colour
 
+  get "/svg/square/:r/:g/:b" $ do
+      let shape = "Square"
+      r <- param "r"
+      g <- param "g"
+      b <- param "b"
+      html $ makeShape shape r g b
+
 sillyPrint = print "boo"
+
+makeShape :: Text -> Text -> Text -> Text -> Text
+makeShape shape r g b = R.renderHtml $
+  do H.head $ H.title "Custom Shape"
+     H.body $
+      H.div $ H.preEscapedToHtml $ renderSvg $ svgTest1  (unpack shape) (read (unpack r)) (read (unpack g)) (read(unpack b))
 
 makeCircle :: Text -> Text
 makeCircle colour = R.renderHtml $
-  do H.head $ H.title $ "Circle"
+  do H.head $ H.title "Circle"
      H.body $
       H.div $ H.preEscapedToHtml $ renderSvg svgTest
 
@@ -43,7 +57,11 @@ svgDoc = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "150" ! SVGA.height "100
 
 svgTest :: S.Svg
 svgTest = svgHead
-   where svgHead = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "100%" ! SVGA.height "100%" ! SVGA.viewbox "-25 -25 50 50" $ S.g $runTest
+   where svgHead = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "500" ! SVGA.height "500" ! SVGA.viewbox "-25 -25 50 50" $ S.g $runTest
+
+svgTest1 :: String -> Int -> Int -> Int -> S.Svg
+svgTest1 shape r g b = svgHead ! SVGA.d makePath
+   where svgHead = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "500" ! SVGA.height "500" ! SVGA.viewbox "-25 -25 50 50" $ S.g $ gogoGadgetDoit shape r g b
 
 --svgColour :: Colour -> S.Svg
 --svgColour colour = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "150" ! SVGA.height "100" ! SVGA.viewbox "0 0 3 2" $ S.g $
