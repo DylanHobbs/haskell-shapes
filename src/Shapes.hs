@@ -3,7 +3,7 @@ module Shapes(
   point, getX, getY,
   empty, circle, square,
   identity, translate, rotate, scale, (<+>),
-  inside, toSvg, runTest, gogoGadgetDoit)  where
+  inside, toSvg, colouredSquare, colouredCircle, blockyCircle)  where
 
 import qualified Text.Blaze.Svg11 as S
 import qualified Text.Blaze.Internal as I
@@ -14,7 +14,7 @@ import Text.Blaze.Svg11 ((!))
 
 -- Utilities
 data Style = StrokeWidth Double
---           | StrokeColour Int Int Int
+           | StrokeColour Double Double Double
            | FillColour Double Double Double
         deriving (Show, Read)
 
@@ -91,12 +91,6 @@ transform (Compose t1 t2)            p = transform t2 $ transform t1 p
 
 type Drawing = [(Style,Transform,Shape)]
 
-colourAttrVal :: Double -> Double -> Double -> S.AttributeValue
-colourAttrVal r g b = I.stringValue $ sRGB24show $ sRGB r g b
-
-strokeWidthAttrVal :: Double -> S.AttributeValue
-strokeWidthAttrVal d = I.stringValue $ show d
-
 -- interpretation function for drawings
 
 inside :: Point -> Drawing -> Bool
@@ -116,27 +110,45 @@ distance (Vector x y ) = sqrt ( x**2 + y**2 )
 maxnorm :: Point -> Double
 maxnorm (Vector x y ) = max (abs x) (abs y)
 
-createAttrib :: Style -> S.Attribute
-createAttrib (FillColour r g b) =   A.fill $ colourAttrVal r g b
-createAttrib (StrokeWidth d)    =   A.strokeWidth $ strokeWidthAttrVal d
+-- --Interpratation functions for SVG
 
+-- Translate colour to valid hex ()
+colourAttrVal :: Double -> Double -> Double -> S.AttributeValue
+colourAttrVal r g b = I.stringValue $ sRGB24show $ sRGB r g b
+
+-- Translate double to valid width value (0-MAX_INT)
+strokeWidthAttrVal :: Double -> S.AttributeValue
+strokeWidthAttrVal d = I.stringValue $ show d
+
+-- Creates an SVG Attribute to be passed to the construction
+createAttrib :: Style -> S.Attribute
+createAttrib (FillColour r g b)   = A.fill $ colourAttrVal r g b
+createAttrib (StrokeWidth d)      = A.strokeWidth $ strokeWidthAttrVal d
+createAttrib (StrokeColour r g b) = A.stroke $ colourAttrVal r g b
+
+-- Creates the head shape SVG attribute apply whenever you want a shape
 createShapeAttrib :: Shape -> S.Svg
-createShapeAttrib Empty = S.rect ! A.r (I.stringValue "0")
-createShapeAttrib Circle = S.circle ! A.r (I.stringValue "2")
-createShapeAttrib Square = S.rect ! A.width (I.stringValue "10") ! A.height (I.stringValue "10")
+createShapeAttrib Empty   = S.rect ! A.r (I.stringValue "0")
+createShapeAttrib Circle  = S.circle ! A.r (I.stringValue "10")
+createShapeAttrib Square  = S.rect ! A.width (I.stringValue "10") ! A.height (I.stringValue "10")
 
 genSvgStuff :: Drawing -> [S.Attribute]
 genSvgStuff [] = []
 genSvgStuff ((style, trans, shape):ds) = createAttrib style : genSvgStuff ds
 
 toSvg :: Drawing -> S.Svg
-toSvg d@[(style, trans, shape)] = foldl (!) (createShapeAttrib shape) $ genSvgStuff d
+toSvg d@((style, trans, shape):rest) = foldl (!) (createShapeAttrib shape) $ genSvgStuff d
+
+-- Test Sections
 
 testShape = (scale (point 10 10), circle)
 
-testFillRect = [(FillColour 0.6 0.1 0.8, scale(point 10 10), square)]
-runTest = toSvg testFillRect
-
-gogoGadgetDoit shape r g b = toSvg s
+colouredSquare shape r g b = toSvg s
   where s = [(FillColour r g b, identity, square)]
+
+colouredCircle shape r g b = toSvg s
+  where s = [(FillColour r g b, identity, circle)]
+
+blockyCircle d = toSvg s
+  where s = [(StrokeWidth d, identity, circle), (StrokeColour 0 0 0, identity, circle), (FillColour 1 0 0, identity, circle)]
 

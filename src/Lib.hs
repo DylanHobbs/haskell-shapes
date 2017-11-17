@@ -17,48 +17,71 @@ import Text.Blaze.Html5 (toHtml)
 beamMeUpScotty = scotty 3000 $ do
   get "/" $ html "Hello World!"
 
-  get "/greet" $ html "Yo"
-
-  get (literal "/greet/") $ html "Oh, wow!"
-
-  get "/svg/circle/:colour" $ do
+  get "/svg/circle/:r/:g/:b" $ do
       let shape = "Circle"
-      colour <- param "colour"
-      html $ makeCircle colour
+      r <- param "r"
+      g <- param "g"
+      b <- param "b"
+      html $ makeCircle shape r g b
 
   get "/svg/square/:r/:g/:b" $ do
       let shape = "Square"
       r <- param "r"
       g <- param "g"
       b <- param "b"
-      html $ makeShape shape r g b
+      html $ makeSquare shape r g b
+
+  get "/svg/lines/:d" $ do
+      let shape = "Square"
+      d <- param "d"
+      html $ makeThickCircle d
 
 sillyPrint = print "boo"
 
-makeShape :: Text -> Text -> Text -> Text -> Text
-makeShape shape r g b = R.renderHtml $
-  do H.head $ H.title "Custom Shape"
+testForm :: Text
+testForm = R.renderHtml $
+  do H.head $ H.title "Form"
      H.body $
-      H.div $ H.preEscapedToHtml $ renderSvg $ svgTest1  (unpack shape) (read (unpack r)) (read (unpack g)) (read(unpack b))
+      H.form $ H.span "foo"
 
-makeCircle :: Text -> Text
-makeCircle colour = R.renderHtml $
+makeSquare :: Text -> Text -> Text -> Text -> Text
+makeSquare shape r g b = R.renderHtml $
+  do H.head $ H.title "Square"
+     H.body $
+      H.div $ H.preEscapedToHtml $ renderSvg $ squareSvg  (unpack shape) (read (unpack r)) (read (unpack g)) (read(unpack b))
+
+makeCircle :: Text -> Text -> Text -> Text -> Text
+makeCircle shape r g b = R.renderHtml $
   do H.head $ H.title "Circle"
      H.body $
-      H.div $ H.preEscapedToHtml $ renderSvg svgDoc
+      H.div $ H.preEscapedToHtml $ renderSvg $ circleSvg  (unpack shape) (read (unpack r)) (read (unpack g)) (read(unpack b))
+
+makeThickCircle :: Text -> Text
+makeThickCircle d = R.renderHtml $
+  do H.head $ H.title "Thick Circle"
+     H.body $
+      H.div $ H.preEscapedToHtml $ renderSvg $ thickCircleSvg (read (unpack d))
 
 
-svgDoc :: S.Svg
-svgDoc = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "150" ! SVGA.height "100" $ S.g $
-  do S.circle ! SVGA.cx "50" ! SVGA.cy "50" ! SVGA.r "50" ! SVGA.fill "#ff0000"
+--svgDoc :: S.Svg
+--svgDoc = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "150" ! SVGA.height "100" $ S.g $
+--  do S.circle ! SVGA.cx "50" ! SVGA.cy "50" ! SVGA.r "50" ! SVGA.fill "#ff0000"
 
-svgTest :: S.Svg
-svgTest = svgHead
-   where svgHead = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "500" ! SVGA.height "500" ! SVGA.viewbox "0 0 3 2" $ S.g $runTest
+--svgTest :: S.Svg
+--svgTest = svgHead
+--   where svgHead = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "500" ! SVGA.height "500" ! SVGA.viewbox "0 0 3 2" $ S.g $runTest
 
-svgTest1 :: String -> Double -> Double -> Double -> S.Svg
-svgTest1 shape r g b = svgHead
-   where svgHead = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "500" ! SVGA.height "500" ! SVGA.viewbox "-25 -25 50 50" $ S.g $ gogoGadgetDoit shape r g b
+squareSvg :: String -> Double -> Double -> Double -> S.Svg
+squareSvg shape r g b = svgHead
+   where svgHead = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "500" ! SVGA.height "500" ! SVGA.viewbox "-25 -25 50 50" $ S.g $ colouredSquare shape r g b
+
+circleSvg :: String -> Double -> Double -> Double -> S.Svg
+circleSvg shape r g b = svgHead
+   where svgHead = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "500" ! SVGA.height "500" ! SVGA.viewbox "-25 -25 50 50" $ S.g $ colouredCircle shape r g b
+
+thickCircleSvg :: Double -> S.Svg
+thickCircleSvg d = svgHead
+   where svgHead = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "500" ! SVGA.height "500" ! SVGA.viewbox "-25 -25 50 50" $ S.g $ blockyCircle d
 
 --svgColour :: Colour -> S.Svg
 --svgColour colour = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "150" ! SVGA.height "100" ! SVGA.viewbox "0 0 3 2" $ S.g $
@@ -66,8 +89,6 @@ svgTest1 shape r g b = svgHead
 --     S.rect ! SVGA.width "1" ! SVGA.height "2" ! SVGA.fill "#ffffff"
 --     S.rect ! SVGA.width "1" ! SVGA.height "2" ! SVGA.fill "#d2232c"
 --     S.path ! SVGA.d makePath
-
-
 
 makePath :: S.AttributeValue
 makePath = mkPath $ do
