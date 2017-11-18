@@ -10,12 +10,13 @@ import qualified Text.Blaze.Svg11.Attributes as SVGA
 import Text.Blaze.Svg11 ((!), mkPath, rotate, l, m)
 import Text.Blaze.Svg.Renderer.Text (renderSvg)
 import Shapes
-import Ansi
 import Data.Text.Lazy (Text,unpack)
 import Text.Blaze.Html5 (toHtml)
 
 beamMeUpScotty = scotty 3000 $ do
   get "/" $ html "Hello World!"
+
+--  get "/test" $ html test
 
   get "/svg/circle/:r/:g/:b" $ do
       let shape = "Circle"
@@ -36,13 +37,27 @@ beamMeUpScotty = scotty 3000 $ do
       d <- param "d"
       html $ makeThickCircle d
 
+  get "/svg/rotated" $ html $ rotatedSquare
+
 sillyPrint = print "boo"
+
+--test :: Text
+--test = R.renderHtml $
+--  do H.head $ H.title "Test"
+--     H.body $
+--      H.form $ H.preEscapedToHtml $ renderSvg svgColour
 
 testForm :: Text
 testForm = R.renderHtml $
   do H.head $ H.title "Form"
      H.body $
       H.form $ H.span "foo"
+
+rotatedSquare :: Text
+rotatedSquare = R.renderHtml $
+   do H.head $ H.title "Form"
+      H.body $
+        H.div $ H.preEscapedToHtml $ renderSvg $ rotatedSvg
 
 makeSquare :: Text -> Text -> Text -> Text -> Text
 makeSquare shape r g b = R.renderHtml $
@@ -62,14 +77,9 @@ makeThickCircle d = R.renderHtml $
      H.body $
       H.div $ H.preEscapedToHtml $ renderSvg $ thickCircleSvg (read (unpack d))
 
-
---svgDoc :: S.Svg
---svgDoc = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "150" ! SVGA.height "100" $ S.g $
---  do S.circle ! SVGA.cx "50" ! SVGA.cy "50" ! SVGA.r "50" ! SVGA.fill "#ff0000"
-
---svgTest :: S.Svg
---svgTest = svgHead
---   where svgHead = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "500" ! SVGA.height "500" ! SVGA.viewbox "0 0 3 2" $ S.g $runTest
+---------------------------------------------------------------------------------------------------------------------------------------
+rotatedSvg :: S.Svg
+rotatedSvg = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "100%" ! SVGA.height "100%" ! SVGA.viewbox "-25 -5 50 50" $ S.g $ roatedSquare
 
 squareSvg :: String -> Double -> Double -> Double -> S.Svg
 squareSvg shape r g b = svgHead
@@ -82,13 +92,13 @@ circleSvg shape r g b = svgHead
 thickCircleSvg :: Double -> S.Svg
 thickCircleSvg d = svgHead
    where svgHead = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "500" ! SVGA.height "500" ! SVGA.viewbox "-25 -25 50 50" $ S.g $ blockyCircle d
+--
+--svgColour :: S.Svg
+--svgColour = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "500" ! SVGA.height "500" ! SVGA.viewbox "-25 -25 50 50" $ S.g
+--        $ do
+--        S.rect ! SVGA.width "1" ! SVGA.height "2" ! SVGA.fill "#008d46" ! SVGA.transform (S.rotate 10) (S.scale 3 3)
+--        S.path ! SVGA.d makePath
 
---svgColour :: Colour -> S.Svg
---svgColour colour = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "150" ! SVGA.height "100" ! SVGA.viewbox "0 0 3 2" $ S.g $
---  do S.rect ! SVGA.width "1" ! SVGA.height "2" ! SVGA.fill "#008d46"
---     S.rect ! SVGA.width "1" ! SVGA.height "2" ! SVGA.fill "#ffffff"
---     S.rect ! SVGA.width "1" ! SVGA.height "2" ! SVGA.fill "#d2232c"
---     S.path ! SVGA.d makePath
 
 makePath :: S.AttributeValue
 makePath = mkPath $ do

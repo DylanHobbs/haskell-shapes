@@ -2,8 +2,7 @@ module Shapes(
   Shape, Point, Vector, Transform, Drawing,
   point, getX, getY,
   empty, circle, square,
-  identity, translate, rotate, scale, (<+>),
-  inside, toSvg, colouredSquare, colouredCircle, blockyCircle)  where
+  identity, translate, rotate, scale, (<+>), toSvg, colouredSquare, colouredCircle, blockyCircle, roatedSquare)  where
 
 import qualified Text.Blaze.Svg11 as S
 import qualified Text.Blaze.Internal as I
@@ -17,9 +16,17 @@ data Style = StrokeWidth Double
            | StrokeColour Double Double Double
            | FillColour Double Double Double
         deriving (Show, Read)
+fillColour = FillColour
+strokeColour = StrokeColour
+strokeWidth = StrokeWidth
 
 data Vector = Vector Double Double
               deriving Show
+
+merge :: [a] -> [a] -> [a]
+merge xs     []     = xs
+merge []     ys     = ys
+merge (x:xs) (y:ys) = x : y : merge xs ys
 
 vector = Vector
 
@@ -70,21 +77,21 @@ data Transform = Identity
            | Translate Vector
            | Scale Vector
            | Compose Transform Transform
-           | Rotate Matrix
+           | Rotate Int
              deriving Show
 
 identity = Identity
 translate = Translate
 scale = Scale
-rotate angle = Rotate $ matrix (cos angle) (-sin angle) (sin angle) (cos angle)
+rotate = Rotate
 t0 <+> t1 = Compose t0 t1
 
-transform :: Transform -> Point -> Point
-transform Identity                   x = id x
-transform (Translate (Vector tx ty)) (Vector px py)  = Vector (px - tx) (py - ty)
-transform (Scale (Vector tx ty))     (Vector px py)  = Vector (px / tx)  (py / ty)
-transform (Rotate m)                 p = (invert m) `mult` p
-transform (Compose t1 t2)            p = transform t2 $ transform t1 p
+--transform :: Transform -> Point -> Point
+--transform Identity                   x = id x
+--transform (Translate (Vector tx ty)) (Vector px py)  = Vector (px - tx) (py - ty)
+--transform (Scale (Vector tx ty))     (Vector px py)  = Vector (px / tx)  (py / ty)
+--transform (Rotate m)                 p = (invert m) `mult` p
+--transform (Compose t1 t2)            p = transform t2 $ transform t1 p
 
 
 -- Drawings
@@ -93,24 +100,53 @@ type Drawing = [(Style,Transform,Shape)]
 
 -- interpretation function for drawings
 
-inside :: Point -> Drawing -> Bool
-inside p d = or $ map (inside1 p) d
+--inside :: Point -> Drawing -> Bool
+--inside p d = or $ map (inside1 p) d
+--
+--inside1 :: Point -> (Style, Transform, Shape) -> Bool
+--inside1 p (st,t,s) = insides (transform t p) s
+--
+--insides :: Point -> Shape -> Bool
+--p `insides` Empty = False
+--p `insides` Circle = distance p <= 1
+--p `insides` Square = maxnorm  p <= 1
+--
+--distance :: Point -> Double
+--distance (Vector x y ) = sqrt ( x**2 + y**2 )
+--
+--maxnorm :: Point -> Double
+--maxnorm (Vector x y ) = max (abs x) (abs y)
 
-inside1 :: Point -> (Style, Transform, Shape) -> Bool
-inside1 p (st,t,s) = insides (transform t p) s
 
-insides :: Point -> Shape -> Bool
-p `insides` Empty = False
-p `insides` Circle = distance p <= 1
-p `insides` Square = maxnorm  p <= 1
-
-distance :: Point -> Double
-distance (Vector x y ) = sqrt ( x**2 + y**2 )
-
-maxnorm :: Point -> Double
-maxnorm (Vector x y ) = max (abs x) (abs y)
 
 -- --Interpratation functions for SVG
+
+--
+-- Interpretation functions to allow original transforms in SVG
+--
+
+---- Return transformaion parts to be built once complete
+--createTransAttrib :: Transform -> S.AttributeValue
+--createTransAttrib (Translate (Vector x y)) = S.translate x y
+--createTransAttrib (Scale (Vector x y)) = S.scale x y
+--createTransAttrib Identity = S.scale 1 1
+--createTransAttrib (Rotate x) = S.rotate x
+
+transformsToStrings :: [Transform] -> String
+transformsToStrings [] = []
+transformsToStrings (Translate (Vector x y):rest) =  ("translate(" ++ show x ++ " " ++ show y ++ ") ") ++ transformsToStrings rest
+transformsToStrings (Scale (Vector x y):rest) = ("scale(" ++ show x ++ " " ++ show y ++ ") ") ++ transformsToStrings rest
+transformsToStrings (Identity:rest) = ("scale(1 1) ") ++ transformsToStrings rest
+transformsToStrings ((Rotate x):rest) = ("rotate(" ++ show x ++ ") ") ++ transformsToStrings rest
+
+transformBuilder :: [Transform] -> S.AttributeValue
+transformBuilder x = I.stringValue $ transformsToStrings x
+
+
+
+--
+-- COLOUR AND SHADE
+--
 
 -- Translate colour to valid hex ()
 colourAttrVal :: Double -> Double -> Double -> S.AttributeValue
@@ -132,23 +168,45 @@ createShapeAttrib Empty   = S.rect ! A.r (I.stringValue "0")
 createShapeAttrib Circle  = S.circle ! A.r (I.stringValue "10")
 createShapeAttrib Square  = S.rect ! A.width (I.stringValue "10") ! A.height (I.stringValue "10")
 
+
+--
+-- SVG GENERAL MAKE
+--
+
+genTransStuff :: Drawing -> [Transform]
+genTransStuff [] = []
+genTransStuff ((style, trans, shape):ds) = trans : genTransStuff ds
+
 genSvgStuff :: Drawing -> [S.Attribute]
 genSvgStuff [] = []
 genSvgStuff ((style, trans, shape):ds) = createAttrib style : genSvgStuff ds
 
 toSvg :: Drawing -> S.Svg
-toSvg d@((style, trans, shape):rest) = foldl (!) (createShapeAttrib shape) $ genSvgStuff d
+toSvg d@((style, trans, shape):rest) = do
+  --let a = A.transform $ head $ genTransStuff d
+  let s = A.transform $ transformBuilder $ genTransStuff d
+  let b = genSvgStuff d
+  let attribList = s : b
+  foldl (!) (createShapeAttrib shape) attribList
+
+
 
 -- Test Sections
-
+-- TODO: Remove vectors
+-- TODO: Create lists with where clause like I made with shane
+-- TODO: Make a combine function for styles and tranforms
+-- TODO: Combine styles and transforms
 testShape = (scale (point 10 10), circle)
 
+roatedSquare = toSvg s
+  where s = [(strokeWidth 1, scale (Vector 2 2), square), (strokeColour 0 0 0, rotate 45, square), (fillColour 1 0 0, identity, square)]
+
 colouredSquare shape r g b = toSvg s
-  where s = [(FillColour r g b, identity, square)]
+  where s = [(fillColour r g b, identity, square)]
 
 colouredCircle shape r g b = toSvg s
-  where s = [(FillColour r g b, identity, circle)]
+  where s = [(fillColour r g b, identity, circle)]
 
 blockyCircle d = toSvg s
-  where s = [(StrokeWidth d, identity, circle), (StrokeColour 0 0 0, identity, circle), (FillColour 1 0 0, identity, circle)]
+  where s = [(strokeWidth d, identity, circle), (strokeColour 0 0 0, identity, circle), (fillColour 1 0 0, identity, circle)]
 
