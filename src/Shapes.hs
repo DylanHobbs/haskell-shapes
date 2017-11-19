@@ -2,7 +2,7 @@ module Shapes(
   Shape, Point, Vector, Transform, Drawing,
   point, getX, getY,
   empty, circle, square,
-  identity, translate, rotate, scale, (<+>), toSvg, colouredSquare, colouredCircle, blockyCircle, roatedSquare)  where
+  identity, translate, rotate, scale, (<+>), toSvg, colouredSquare, colouredCircle, blockyCircle, roatedSquare, buildCustomSvgFromString)  where
 
 import qualified Text.Blaze.Svg11 as S
 import qualified Text.Blaze.Internal as I
@@ -63,7 +63,7 @@ point = vector
 data Shape = Empty
            | Circle
            | Square
-             deriving Show
+             deriving (Show, Read)
 
 empty, circle, square :: Shape
 
@@ -74,11 +74,11 @@ square = Square
 -- Transformations
 
 data Transform = Identity
-           | Translate Vector
-           | Scale Vector
+           | Translate Double Double
+           | Scale Double Double
            | Compose Transform Transform
            | Rotate Int
-             deriving Show
+             deriving (Show, Read)
 
 identity = Identity
 translate = Translate
@@ -134,10 +134,10 @@ type Drawing = [(Style,Transform,Shape)]
 
 transformsToStrings :: [Transform] -> String
 transformsToStrings [] = []
-transformsToStrings (Translate (Vector x y):rest) =  ("translate(" ++ show x ++ " " ++ show y ++ ") ") ++ transformsToStrings rest
-transformsToStrings (Scale (Vector x y):rest) = ("scale(" ++ show x ++ " " ++ show y ++ ") ") ++ transformsToStrings rest
-transformsToStrings (Identity:rest) = ("scale(1 1) ") ++ transformsToStrings rest
-transformsToStrings ((Rotate x):rest) = ("rotate(" ++ show x ++ ") ") ++ transformsToStrings rest
+transformsToStrings (Translate x y:rest) =  ("translate(" ++ show x ++ " " ++ show y ++ ") ") ++ transformsToStrings rest
+transformsToStrings (Scale x y:rest) = ("scale(" ++ show x ++ " " ++ show y ++ ") ") ++ transformsToStrings rest
+transformsToStrings (Identity:rest) = "scale(1 1) " ++ transformsToStrings rest
+transformsToStrings (Rotate x : rest) = ("rotate(" ++ show x ++ ") ") ++ transformsToStrings rest
 
 transformBuilder :: [Transform] -> S.AttributeValue
 transformBuilder x = I.stringValue $ transformsToStrings x
@@ -181,6 +181,12 @@ genSvgStuff :: Drawing -> [S.Attribute]
 genSvgStuff [] = []
 genSvgStuff ((style, trans, shape):ds) = createAttrib style : genSvgStuff ds
 
+-- Svg Builder
+-- Utility builder from string
+buildCustomSvgFromString :: String -> String -> String -> S.Svg
+buildCustomSvgFromString style trans shape = toSvg drawing
+                                    where drawing = [(read style :: Style, read trans :: Transform, read shape :: Shape)]
+
 toSvg :: Drawing -> S.Svg
 toSvg d@((style, trans, shape):rest) = do
   --let a = A.transform $ head $ genTransStuff d
@@ -190,16 +196,14 @@ toSvg d@((style, trans, shape):rest) = do
   foldl (!) (createShapeAttrib shape) attribList
 
 
-
 -- Test Sections
 -- TODO: Remove vectors
 -- TODO: Create lists with where clause like I made with shane
 -- TODO: Make a combine function for styles and tranforms
 -- TODO: Combine styles and transforms
-testShape = (scale (point 10 10), circle)
 
 roatedSquare = toSvg s
-  where s = [(strokeWidth 1, scale (Vector 2 2), square), (strokeColour 0 0 0, rotate 45, square), (fillColour 1 0 0, identity, square)]
+  where s = [(strokeWidth 1, scale  2 2, square), (strokeColour 0 0 0, rotate 45, square), (fillColour 1 0 0, identity, square)]
 
 colouredSquare shape r g b = toSvg s
   where s = [(fillColour r g b, identity, square)]
