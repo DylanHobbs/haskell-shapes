@@ -71,9 +71,9 @@ testForm = R.renderHtml $
   do H.head $ H.title "Form"
      H.body $
       H.form ! A.action "/shapes/create" $ do
-        H.input ! A.type_ "text" ! A.name "Styles" ! A.value "Styles"
-        H.input ! A.type_ "text" ! A.name "Transforms" ! A.value "Transforms"
-        H.input ! A.type_ "text" ! A.name "Shapes" ! A.value "Shapes"
+        H.input ! A.type_ "text" ! A.name "Styles" ! A.value "FillColour 0.5 0.1 0"
+        H.input ! A.type_ "text" ! A.name "Transforms" ! A.value "Rotate 45"
+        H.input ! A.type_ "text" ! A.name "Shapes" ! A.value "Square"
         H.input ! A.type_ "submit" ! A.value "Submit"
 
 rotatedSquare :: Text
