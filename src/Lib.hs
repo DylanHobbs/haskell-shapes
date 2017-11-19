@@ -31,25 +31,6 @@ beamMeUpScotty = scotty 3000 $ do
         shape <- param "Shapes"
         html $ buildShape style trans shape
 
-  get "/svg/circle/:r/:g/:b" $ do
-      let shape = "Circle"
-      r <- param "r"
-      g <- param "g"
-      b <- param "b"
-      html $ makeCircle shape r g b
-
-  get "/svg/square/:r/:g/:b" $ do
-      let shape = "Square"
-      r <- param "r"
-      g <- param "g"
-      b <- param "b"
-      html $ makeSquare shape r g b
-
-  get "/svg/lines/:d" $ do
-      let shape = "Square"
-      d <- param "d"
-      html $ makeThickCircle d
-
   get "/svg/rotated" $ html $ rotatedSquare
 
 sillyPrint = print "boo"
@@ -82,48 +63,12 @@ rotatedSquare = R.renderHtml $
       H.body $
         H.div $ H.preEscapedToHtml $ renderSvg $ rotatedSvg
 
-makeSquare :: Text -> Text -> Text -> Text -> Text
-makeSquare shape r g b = R.renderHtml $
-  do H.head $ H.title "Square"
-     H.body $
-      H.div $ H.preEscapedToHtml $ renderSvg $ squareSvg  (unpack shape) (read (unpack r)) (read (unpack g)) (read(unpack b))
-
-makeCircle :: Text -> Text -> Text -> Text -> Text
-makeCircle shape r g b = R.renderHtml $
-  do H.head $ H.title "Circle"
-     H.body $
-      H.div $ H.preEscapedToHtml $ renderSvg $ circleSvg  (unpack shape) (read (unpack r)) (read (unpack g)) (read(unpack b))
-
-makeThickCircle :: Text -> Text
-makeThickCircle d = R.renderHtml $
-  do H.head $ H.title "Thick Circle"
-     H.body $
-      H.div $ H.preEscapedToHtml $ renderSvg $ thickCircleSvg (read (unpack d))
-
 ---------------------------------------------------------------------------------------------------------------------------------------
 customSvg :: String -> String -> String -> S.Svg
 customSvg style trans shape = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "100%" ! SVGA.height "100%" ! SVGA.viewbox "-25 -5 50 50" $ S.g $ buildCustomSvgFromString style trans shape
 
 rotatedSvg :: S.Svg
 rotatedSvg = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "100%" ! SVGA.height "100%" ! SVGA.viewbox "-25 -5 50 50" $ S.g $ roatedSquare
-
-squareSvg :: String -> Double -> Double -> Double -> S.Svg
-squareSvg shape r g b = svgHead
-   where svgHead = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "500" ! SVGA.height "500" ! SVGA.viewbox "-25 -25 50 50" $ S.g $ colouredSquare shape r g b
-
-circleSvg :: String -> Double -> Double -> Double -> S.Svg
-circleSvg shape r g b = svgHead
-   where svgHead = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "500" ! SVGA.height "500" ! SVGA.viewbox "-25 -25 50 50" $ S.g $ colouredCircle shape r g b
-
-thickCircleSvg :: Double -> S.Svg
-thickCircleSvg d = svgHead
-   where svgHead = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "500" ! SVGA.height "500" ! SVGA.viewbox "-25 -25 50 50" $ S.g $ blockyCircle d
---
---svgColour :: S.Svg
---svgColour = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "500" ! SVGA.height "500" ! SVGA.viewbox "-25 -25 50 50" $ S.g
---        $ do
---        S.rect ! SVGA.width "1" ! SVGA.height "2" ! SVGA.fill "#008d46" ! SVGA.transform (S.rotate 10) (S.scale 3 3)
---        S.path ! SVGA.d makePath
 
 
 makePath :: S.AttributeValue
