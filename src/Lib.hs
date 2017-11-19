@@ -58,7 +58,7 @@ buildShape :: Text -> Text -> Text ->Text
 buildShape style trans shape = R.renderHtml $
   do H.head $ H.title "Shape SVG"
      H.body $
-      H.div $ H.preEscapedToHtml $ renderSvg $ buildCustomSvgFromString (unpack style) (unpack trans) (unpack shape)
+      H.div $ H.preEscapedToHtml $ renderSvg $ customSvg (unpack style) (unpack trans) (unpack shape)
 
 --test :: Text
 --test = R.renderHtml $
@@ -102,7 +102,7 @@ makeThickCircle d = R.renderHtml $
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 customSvg :: String -> String -> String -> S.Svg
-customSvg style trans shape = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "100%" ! SVGA.height "100%" ! SVGA.viewbox "-25 -5 50 50" $ S.g $ roatedSquare
+customSvg style trans shape = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "100%" ! SVGA.height "100%" ! SVGA.viewbox "-25 -5 50 50" $ S.g $ buildCustomSvgFromString style trans shape
 
 rotatedSvg :: S.Svg
 rotatedSvg = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "100%" ! SVGA.height "100%" ! SVGA.viewbox "-25 -5 50 50" $ S.g $ roatedSquare
