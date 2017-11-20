@@ -1,7 +1,9 @@
 module Shapes(
   Shape, Transform, Drawing,
   empty, circle, square,
-  identity, translate, rotate, scale, (<+>), toSvg, roatedSquare, buildCustomSvgFromString)  where
+  identity, translate, rotate,
+  scale, toSvg,
+  buildCustomSvgFromString)  where
 
 import qualified Text.Blaze.Svg11 as S
 import qualified Text.Blaze.Internal as I
@@ -10,18 +12,25 @@ import Data.Colour.SRGB
 import Text.Printf (printf)
 import Text.Blaze.Svg11 ((!))
 
+{-|
+  Shape
+  Basic Shape type and constructors supported by SVG
+-}
 data Shape = Empty
            | Circle
            | Square
              deriving (Show, Read)
-
 empty, circle, square :: Shape
-
 empty = Empty
 circle = Circle
 square = Square
 
-
+{-|
+  Style
+  Basic styles supported by SVG.
+  Compose here is fined as an infix constructer at the type level and as a distinct type
+  This is to aid in typing something readable that can be easily derived from a read instance
+-}
 data Style = NoStyle
            | StrokeWidth Double
            | StrokeColour Double Double Double
@@ -36,6 +45,10 @@ fillColour    = FillColour
 t0 <++> t1    = Compose' t0 t1
 t0 :<++> t1   = Compose' t0 t1
 
+{-|
+  Transforms
+  Basic transfroms supported by SVG.
+-}
 data Transform = Identity
            | Translate Double Double
            | Scale Double Double
@@ -48,14 +61,25 @@ scale = Scale
 rotate = Rotate
 t0 <+> t1 = Compose t0 t1
 
-
-type Drawing = [(Style, Transform,Shape)]
 {-|
   Styles and transformations are functionaly different in their implmentations
   as one "transformation" needs to be composed of all the composed parts whereas
-  each style needs to be seperated.
+  each style needs to be seperated. Hence the seperation between styles and
+  transforms
 -}
+type Drawing = [(Style, Transform,Shape)]
 
+{-|
+  transformsToStrings
+  This is a helper function for transformBuilder.
+  The entire composed "list" of transforms needs to be folded into one
+  S.Attribute for transforms to work correctly.
+  Having failed to find a way to properly chain S.AttributeValues,
+  I used the Blaze-Internal method to construct my own.
+
+  Compose here is simple to implement as the strings only need
+  to be concatenated to make valid syntax
+-}
 transformsToStrings :: Transform -> String
 transformsToStrings (Translate x y)   = "translate(" ++ show x ++ " " ++ show y ++ ") "
 transformsToStrings (Scale x y)       = "scale(" ++ show x ++ " " ++ show y ++ ") "
@@ -63,25 +87,52 @@ transformsToStrings Identity          = "scale(1 1) "
 transformsToStrings (Rotate x )       = "rotate(" ++ show x ++ ") "
 transformsToStrings (Compose t1 t2)   = transformsToStrings t1 ++ " " ++ transformsToStrings t2
 
+{-|
+  transformBuilder
+  Main interpretation function in creating the transforms for an SVG.
+-}
 transformBuilder :: Transform -> S.Attribute
 transformBuilder x = A.transform $ I.stringValue $ transformsToStrings x
 
 -- Style Interpratations
--- Translate colour to valid hex ()
+
+{-|
+  collourAttrVal
+  sRGB uses 3 doubles representing RGB values to make a colour. Using Blaze-Internal
+  I pull out the hex value as a valid colour for a style attribute
+-}
 colourAttrVal :: Double -> Double -> Double -> S.AttributeValue
 colourAttrVal r g b = I.stringValue $ sRGB24show $ sRGB r g b
 
--- Translate double to valid width value (0-MAX_INT)
+{-|
+  strokeWidthAttrVal
+  Boring helper function because I like typing more I suppose.
+  Takes a double and turns to into an AttributeValue to be passed
+  to an expecting attribute
+-}
 strokeWidthAttrVal :: Double -> S.AttributeValue
 strokeWidthAttrVal d = I.stringValue $ show d
 
--- Creates an SVG Attribute to be passed to the construction
+{-|
+  createAttrib
+  This is a helper function to translate a style to it's correspinding
+  attribute
+-}
 createAttrib :: Style -> S.Attribute
 createAttrib NoStyle              = A.name $ I.stringValue "Nothing"
 createAttrib (FillColour r g b)   = A.fill $ colourAttrVal r g b
 createAttrib (StrokeWidth d)      = A.strokeWidth $ strokeWidthAttrVal d
 createAttrib (StrokeColour r g b) = A.stroke $ colourAttrVal r g b
 
+{-|
+  translateToListStyles
+  Style attributes are a little different to the transform attributes
+  as they must all be seperate.
+  Most noteable difference here is in how compose is implmented. To make
+  a valid [S.Attribute] the compose function is lifted out of each side.
+  The individual components are just returned to be added to the list.
+  In this way we can allow any number of composes'.
+-}
 translateToListStyles :: Style -> [Style]
 translateToListStyles x@NoStyle              = [x]
 translateToListStyles x@(FillColour r g b)   = [x]
@@ -89,66 +140,50 @@ translateToListStyles x@(StrokeWidth d)      = [x]
 translateToListStyles x@(StrokeColour r g b) = [x]
 translateToListStyles (Compose' s1 s2)       = translateToListStyles s1 ++ translateToListStyles s2
 
+{-|
+  styleBuilder
+  Main interpretation function used to generate valid attributes from the style
+-}
 styleBuilder :: Style -> [S.Attribute]
 styleBuilder x = map createAttrib $ translateToListStyles x
 
--- Creates the head shape SVG attribute apply whenever you want a shape
+{-|
+  createShapeAttrib
+  Generates valid SVG head for a desired shape.
+  They are initialised here with a default size of 1 and can be scaled to any size.
+-}
 createShapeAttrib :: Shape -> S.Svg
 createShapeAttrib Empty   = S.rect ! A.r (I.stringValue "0")
-createShapeAttrib Circle  = S.circle ! A.r (I.stringValue "10")
-createShapeAttrib Square  = S.rect ! A.width (I.stringValue "10") ! A.height (I.stringValue "10")
+createShapeAttrib Circle  = S.circle ! A.r (I.stringValue "1")
+createShapeAttrib Square  = S.rect ! A.width (I.stringValue "1") ! A.height (I.stringValue "1")
 
 --
 -- SVG GENERAL MAKE
 --
 
-genTransStuff :: Drawing -> [Transform]
-genTransStuff [] = []
-genTransStuff ((style, trans, shape):ds) = trans : genTransStuff ds
-
-genSvgStuff :: Drawing -> [S.Attribute]
-genSvgStuff [] = []
-genSvgStuff ((style, trans, shape):ds) = createAttrib style : genSvgStuff ds
-
--- Svg Builder
--- Utility builder from string
+{-|
+  buildCustomSvgFromString
+  EXPORTED
+  Interface to allow the return of an SVG given in string representation in the Shape lanuage
+-}
 buildCustomSvgFromString :: String -> String -> String -> S.Svg
 buildCustomSvgFromString style trans shape = toSvg drawing
                                     where drawing = [(read style :: Style, read trans :: Transform, read shape :: Shape)]
 
+{-|
+  toSvg
+  EXPORTED
+  Creates a valid SVG from the components of a drawing
+-}
 toSvg :: Drawing -> S.Svg
-toSvg d@((style, trans, shape):rest) = do
-  --let a = A.transform $ head $ genTransStuff d
-  let t = transformBuilder trans
-  let s = styleBuilder style
-  let attribList = t : s
-  foldl (!) (createShapeAttrib shape) attribList
+toSvg ((style, trans, shape):rest) = do
+                                    foldl (!) (createShapeAttrib shape) attributeList
+                                    toSvg rest
+                                    where
+                                      attributeList = transformBuilder trans : styleBuilder style
 
-
--- Test Sections
--- TODO: Remove vectors
--- TODO: Create lists with where clause like I made with shane
--- TODO: Make a combine function for styles and tranforms
--- TODO: Combine styles and transforms
-
-roatedSquare = toSvg s
-  where s = [(strokeWidth 1, scale  2 2, square), (strokeColour 0 0 0, rotate 45, square), (fillColour 1 0 0, identity, square)]
-
-test = toSvg s
-  where s = [(strokeWidth 2 <++> strokeColour 0 0 0 <++> fillColour 1 0 0, Rotate 10 <+> Scale 2 2 <+> Identity, square)]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+-- TODO: Allow mutlipe drawings
+-- TODO: Make form better
+-- TODO: Add more shapes
 
 
