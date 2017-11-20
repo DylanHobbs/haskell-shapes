@@ -1,3 +1,4 @@
+--{-# LANGUAGE OverloadedStrings #-}
 module Shapes(
   Shape, Transform, Drawing,
   empty, circle, square,
@@ -17,10 +18,10 @@ import Text.Blaze.Svg11 ((!))
   Basic Shape type and constructors supported by SVG
 -}
 data Shape = Empty
-           | Circle
-           | Square
+           | Circle Int
+           | Square Int Int
              deriving (Show, Read)
-empty, circle, square :: Shape
+--empty, circle, square :: Shape
 empty = Empty
 circle = Circle
 square = Square
@@ -153,9 +154,9 @@ styleBuilder x = map createAttrib $ translateToListStyles x
   They are initialised here with a default size of 1 and can be scaled to any size.
 -}
 createShapeAttrib :: Shape -> S.Svg
-createShapeAttrib Empty   = S.rect ! A.r (I.stringValue "0")
-createShapeAttrib Circle  = S.circle ! A.r (I.stringValue "5")
-createShapeAttrib Square  = S.rect ! A.width (I.stringValue "5") ! A.height (I.stringValue "5")
+createShapeAttrib Empty         = S.rect ! A.r (I.stringValue "0")
+createShapeAttrib (Circle r)    = S.circle ! A.r (I.stringValue (show r))
+createShapeAttrib (Square w h)  = S.rect ! A.width (I.stringValue (show w)) ! A.height (I.stringValue (show h))
 
 --
 -- SVG GENERAL MAKE
