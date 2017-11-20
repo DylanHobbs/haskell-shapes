@@ -1,7 +1,7 @@
 --{-# LANGUAGE OverloadedStrings #-}
 module Shapes(
   Shape, Transform, Drawing,
-  empty, circle, square,
+  empty, circle, rectangle,
   identity, translate, rotate,
   scale, toSvg,
   buildCustomSvgFromString)  where
@@ -19,12 +19,11 @@ import Text.Blaze.Svg11 ((!))
 -}
 data Shape = Empty
            | Circle Int
-           | Square Int Int
+           | Rectangle Int Int
              deriving (Show, Read)
---empty, circle, square :: Shape
 empty = Empty
 circle = Circle
-square = Square
+rectangle = Rectangle
 
 {-|
   Style
@@ -156,7 +155,7 @@ styleBuilder x = map createAttrib $ translateToListStyles x
 createShapeAttrib :: Shape -> S.Svg
 createShapeAttrib Empty         = S.rect ! A.r (I.stringValue "0")
 createShapeAttrib (Circle r)    = S.circle ! A.r (I.stringValue (show r))
-createShapeAttrib (Square w h)  = S.rect ! A.width (I.stringValue (show w)) ! A.height (I.stringValue (show h))
+createShapeAttrib (Rectangle w h)  = S.rect ! A.width (I.stringValue (show w)) ! A.height (I.stringValue (show h))
 
 --
 -- SVG GENERAL MAKE
@@ -184,5 +183,5 @@ toSvg ((style, trans, shape):rest) = foldl (!) (createShapeAttrib shape) attribu
 -- TODO: Allow mutlipe drawings
 -- TODO: Make form better
 -- TODO: Add more shapes
-
+-- TODO: Add moniod methods to shapes (mempty) and
 
