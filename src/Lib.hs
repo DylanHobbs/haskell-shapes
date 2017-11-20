@@ -42,8 +42,8 @@ testForm = R.renderHtml $
   do H.head $ H.title "Form"
      H.body $
       H.form ! A.action "/shapes/create" $ do
-        H.input ! A.style "width:450px" ! A.type_ "text" ! A.name "Styles" ! A.value "FillColour 0.5 0.1 0"
-        H.input ! A.style "width:450px" ! A.type_ "text" ! A.name "Transforms" ! A.value "Rotate 45"
+        H.input ! A.style "width:450px" ! A.type_ "text" ! A.name "Styles" ! A.value "Compose' (Compose' (FillColour 1 0.5 0) (StrokeColour 0 0 0)) (StrokeWidth 0.1)"
+        H.input ! A.style "width:450px" ! A.type_ "text" ! A.name "Transforms" ! A.value "Compose (Rotate 5) (Scale 2 2)"
         H.input ! A.style "width:450px" ! A.type_ "text" ! A.name "Shapes" ! A.value "Square"
         H.br
         H.input ! A.type_ "submit" ! A.value "Submit"

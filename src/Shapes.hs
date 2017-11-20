@@ -154,8 +154,8 @@ styleBuilder x = map createAttrib $ translateToListStyles x
 -}
 createShapeAttrib :: Shape -> S.Svg
 createShapeAttrib Empty   = S.rect ! A.r (I.stringValue "0")
-createShapeAttrib Circle  = S.circle ! A.r (I.stringValue "1")
-createShapeAttrib Square  = S.rect ! A.width (I.stringValue "1") ! A.height (I.stringValue "1")
+createShapeAttrib Circle  = S.circle ! A.r (I.stringValue "5")
+createShapeAttrib Square  = S.rect ! A.width (I.stringValue "5") ! A.height (I.stringValue "5")
 
 --
 -- SVG GENERAL MAKE
@@ -169,16 +169,14 @@ createShapeAttrib Square  = S.rect ! A.width (I.stringValue "1") ! A.height (I.s
 buildCustomSvgFromString :: String -> String -> String -> S.Svg
 buildCustomSvgFromString style trans shape = toSvg drawing
                                     where drawing = [(read style :: Style, read trans :: Transform, read shape :: Shape)]
-
+--read "[(Compose' (Compose' (FillColour 1 0.5 0) (StrokeColour 0 0 0)) (StrokeWidth 0.1), Compose (Rotate 5) (Scale 50 50), Square)]" :: Drawing
 {-|
   toSvg
   EXPORTED
   Creates a valid SVG from the components of a drawing
 -}
 toSvg :: Drawing -> S.Svg
-toSvg ((style, trans, shape):rest) = do
-                                    foldl (!) (createShapeAttrib shape) attributeList
-                                    toSvg rest
+toSvg ((style, trans, shape):rest) = foldl (!) (createShapeAttrib shape) attributeList
                                     where
                                       attributeList = transformBuilder trans : styleBuilder style
 
