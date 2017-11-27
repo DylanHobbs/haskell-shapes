@@ -58,7 +58,7 @@ testForm = R.renderHtml $
   do H.head $ H.title "Form"
      H.body $
       H.form ! A.action "/shapes/create" $ do
-        H.label "Enter a shape"
+        H.label "Enter a shape or press go for a sample"
         H.br
         H.input ! A.style "width:70%"  ! A.type_ "text" ! A.name "FD" ! A.value "[(FillColour 1 0 0 :<++> (StrokeColour 0 0 1 :<++> StrokeWidth 0.6), Translate 1 5, Circle 4), (FillColour 1 0 0 :<++> (StrokeColour 0 0 1 :<++> StrokeWidth 0.6), Translate 12 5, Circle 4), (FillColour 0 1 0 :<++> (StrokeColour 0 0 0 :<++> StrokeWidth 0.6), Translate 5.5 12 :<+> Rotate 45, Rectangle 2 2), (FillColour 0 0 1 :<++> (StrokeWidth 1 :<++> StrokeColour 0 0 0), Translate 6 20, Circle 3), (FillColour 0 0 0 :<++> (StrokeColour 0 0 1 :<++> StrokeWidth 0.6), Translate 1 5, Circle 1), (FillColour 0 0 0 :<++> (StrokeColour 0 0 1 :<++> StrokeWidth 0.6), Translate 12 5, Circle 1)]"
         H.input ! A.type_ "submit" ! A.value "Submit"
