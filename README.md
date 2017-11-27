@@ -4,7 +4,7 @@ Assignment 1 - Combining the Shape eDSL with two web eDSL languages we saw (Scot
 
 ### Usage
  A drawing is of the form [(styles, transforms, shapes)]
- Entering this into the text box will output a SVG.
+ Entering this into the text box will output a SVG or just press go for an example.
 
 ### Shapes Supported:
   Rectangle     (Double::height Double::width)
