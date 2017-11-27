@@ -1,10 +1,5 @@
---{-# LANGUAGE OverloadedStrings #-}
 module Shapes(
-  Shape, Transform, Drawing,
-  empty, circle, rectangle,
-  identity, translate, rotate,
-  scale, toSvg,
-  buildCustomSvgFromString)  where
+  Style, Shape, Transform, Drawing, toSvg)  where
 
 import qualified Text.Blaze.Svg11 as S
 import qualified Text.Blaze.Internal as I
@@ -28,8 +23,10 @@ rectangle = Rectangle
 {-|
   Style
   Basic styles supported by SVG.
-  Compose here is fined as an infix constructer at the type level and as a distinct type
-  This is to aid in typing something readable that can be easily derived from a read instance
+  Compose here is defined as a normal function and an infix constructor for flexability.
+  When typing in user input it is usually easier to use the infix constructer.
+
+  In hindsight, it would have been easier to make these lists, for both styles and transforms.
 -}
 data Style = NoStyle
            | StrokeWidth Double
@@ -48,18 +45,21 @@ t0 :<++> t1   = Compose' t0 t1
 {-|
   Transforms
   Basic transfroms supported by SVG.
+  Incl
 -}
 data Transform = Identity
            | Translate Double Double
            | Scale Double Double
            | Compose Transform Transform
            | Rotate Int
+           | Transform :<+> Transform
              deriving (Show, Read)
 identity = Identity
 translate = Translate
 scale = Scale
 rotate = Rotate
 t0 <+> t1 = Compose t0 t1
+x :<+> y = Compose x y
 
 {-|
   Styles and transformations are functionaly different in their implmentations
@@ -86,6 +86,7 @@ transformsToStrings (Scale x y)       = "scale(" ++ show x ++ " " ++ show y ++ "
 transformsToStrings Identity          = "scale(1 1) "
 transformsToStrings (Rotate x )       = "rotate(" ++ show x ++ ") "
 transformsToStrings (Compose t1 t2)   = transformsToStrings t1 ++ " " ++ transformsToStrings t2
+transformsToStrings (t1 :<+> t2)   = transformsToStrings t1 ++ " " ++ transformsToStrings t2
 
 {-|
   transformBuilder
@@ -139,6 +140,7 @@ translateToListStyles x@(FillColour r g b)   = [x]
 translateToListStyles x@(StrokeWidth d)      = [x]
 translateToListStyles x@(StrokeColour r g b) = [x]
 translateToListStyles (Compose' s1 s2)       = translateToListStyles s1 ++ translateToListStyles s2
+translateToListStyles (s1 :<++> s2)          = translateToListStyles s1 ++ translateToListStyles s2
 
 {-|
   styleBuilder
@@ -162,26 +164,21 @@ createShapeAttrib (Rectangle w h)  = S.rect ! A.width (I.stringValue (show w)) !
 --
 
 {-|
-  buildCustomSvgFromString
-  EXPORTED
-  Interface to allow the return of an SVG given in string representation in the Shape lanuage
+  buildCustomSVG
+  Interface to allow the return of an SVG given in the Shape language. Assumed to be read in from source
 -}
-buildCustomSvgFromString :: String -> String -> String -> S.Svg
-buildCustomSvgFromString style trans shape = toSvg drawing
-                                    where drawing = [(read style :: Style, read trans :: Transform, read shape :: Shape)]
---read "[(Compose' (Compose' (FillColour 1 0.5 0) (StrokeColour 0 0 0)) (StrokeWidth 0.1), Compose (Rotate 5) (Scale 50 50), Square)]" :: Drawing
+buildCustomSVG :: (Style, Transform, Shape) -> S.Svg
+buildCustomSVG (st, tr, sh) = foldl (!) (createShapeAttrib sh) attributeList
+                                  where attributeList = transformBuilder tr : styleBuilder st
+
 {-|
   toSvg
   EXPORTED
   Creates a valid SVG from the components of a drawing
 -}
 toSvg :: Drawing -> S.Svg
-toSvg ((style, trans, shape):rest) = foldl (!) (createShapeAttrib shape) attributeList
-                                    where
-                                      attributeList = transformBuilder trans : styleBuilder style
+toSvg [d] = buildCustomSVG d
+toSvg (d:ds) = buildCustomSVG d >> toSvg ds
 
--- TODO: Allow mutlipe drawings
--- TODO: Make form better
--- TODO: Add more shapes
--- TODO: Add moniod methods to shapes (mempty) and
+
 

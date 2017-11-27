@@ -14,46 +14,63 @@ import Shapes
 import Data.Text.Lazy (Text,unpack)
 import Text.Blaze.Html5 (toHtml)
 
+{-|
+  Scotty entrypoint for the WebServer.
+-}
 beamMeUpScotty = scotty 3000 $ do
   get "/" $ html "Go to /shapes for the form"
 
+  {-|
+    Just displays the form. Nothing fancy
+  -}
   get "/shapes" $ html testForm
 
-  post "/shapes/create" $ do
-      style <- param "Styles"
-      trans <- param "Transforms"
-      shape <- param "Shapes"
-      html $ buildShape style trans shape
-
+  {-|
+    Shape creation page.
+    Grabs the user input
+  -}
   get "/shapes/create" $ do
-        style <- param "Styles"
-        trans <- param "Transforms"
-        shape <- param "Shapes"
-        html $ buildShape style trans shape
+        drawing <- param "FD"
+        html $ buildShape drawing
 
-buildShape :: Text -> Text -> Text ->Text
-buildShape style trans shape = R.renderHtml $
-  do H.head $ H.title "Shape SVG"
+
+{-|
+  Blaze HTML function to create the shape.
+  Once the renderSvg call translates this to MarkUpM
+  preEscapedHtml can translate it to a form Blaze understands.
+  Care has been taken to ensure everything is in the correct html form.
+-}
+buildShape :: Text -> Text
+buildShape draw = R.renderHtml $
+  do H.head $ do
+      H.title "Shape SVG"
+      H.link ! A.rel "stylesheet" ! A.href "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
      H.body $
-      H.div $ H.preEscapedToHtml $ renderSvg $ customSvg (unpack style) (unpack trans) (unpack shape)
+      H.div $ H.preEscapedToHtml $ renderSvg  $ customSvg' (unpack draw)
 
+
+{-|
+  Blaze form, simply takes user input from a form. Post requests were behaving strangly when parsing
+  input. This just gives a get request.
+-}
 testForm :: Text
 testForm = R.renderHtml $
   do H.head $ H.title "Form"
      H.body $
       H.form ! A.action "/shapes/create" $ do
-        H.input ! A.style "width:450px" ! A.type_ "text" ! A.name "Styles" ! A.value "Compose' (Compose' (FillColour 1 0.5 0) (StrokeColour 0 0 0)) (StrokeWidth 0.1)"
-        H.input ! A.style "width:450px" ! A.type_ "text" ! A.name "Transforms" ! A.value "Compose (Compose (Rotate 5) (Scale 1 1)) (Translate 1 10)"
-        H.input ! A.style "width:450px" ! A.type_ "text" ! A.name "Shapes" ! A.value "Rectangle 2 2"
+        H.label "Enter a shape"
         H.br
+        H.input ! A.style "width:70%"  ! A.type_ "text" ! A.name "FD" ! A.value "[(FillColour 1 0 0 :<++> (StrokeColour 0 0 1 :<++> StrokeWidth 0.6), Translate 1 5, Circle 4), (FillColour 1 0 0 :<++> (StrokeColour 0 0 1 :<++> StrokeWidth 0.6), Translate 12 5, Circle 4), (FillColour 0 1 0 :<++> (StrokeColour 0 0 0 :<++> StrokeWidth 0.6), Translate 5.5 12 :<+> Rotate 45, Rectangle 2 2), (FillColour 0 0 1 :<++> (StrokeWidth 1 :<++> StrokeColour 0 0 0), Translate 6 20, Circle 3), (FillColour 0 0 0 :<++> (StrokeColour 0 0 1 :<++> StrokeWidth 0.6), Translate 1 5, Circle 1), (FillColour 0 0 0 :<++> (StrokeColour 0 0 1 :<++> StrokeWidth 0.6), Translate 12 5, Circle 1)]"
         H.input ! A.type_ "submit" ! A.value "Submit"
----------------------------------------------------------------------------------------------------------------------------------------
-customSvg :: String -> String -> String -> S.Svg
-customSvg style trans shape = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "100%"
-                        ! SVGA.height "100%" ! SVGA.viewbox "-25 -5 50 50"
-                        $ S.g $ buildCustomSvgFromString style trans shape
 
-makePath :: S.AttributeValue
-makePath = mkPath $ do
-  l 2 3
-  m 4 5
+---------------------------------------------------------------------------------------------------------------------------------------
+{-|
+  SVG Generator function.
+  Essentially is just adds the proper SVG head onto the defined shape from the user input.
+-}
+
+customSvg' :: String -> S.Svg
+customSvg' draw = S.docTypeSvg ! SVGA.version "1.1" ! SVGA.width "100%"
+                        ! SVGA.height "100%" ! SVGA.viewbox "-25 -5 50 50"
+                        $ S.g $ toSvg (read draw :: Drawing)
+
