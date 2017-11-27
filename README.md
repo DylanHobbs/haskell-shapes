@@ -13,24 +13,35 @@ Assignment 1 - Combining the Shape eDSL with two web eDSL languages we saw (Scot
 
 ### Shapes Supported:
   Rectangle     (Double::height Double::width)
+  
   Circle        (Double::radius
   
 ### Sytles 
   All colours are RGB formed with 3 doubles in the range of 0.0-0.1
+  
   NoStyle       (No style)
+  
   FillColour    (Double::red Double::green Double::blue)
+  
   StrokeWidth   (Double::thickness)
+  
   StrokeColour  (Double::red Double::green Double::blue)
   
 ### Transforms
   Identity      (No transform)
+  
   Translate     (Double::x Double::y)
+  
   Scale         (Double::x Double::y)
+  
   Rotate        (Int   ::degree)
   
 ### Combinations
   Inline combiners can be used to combine both Transforms and Styles
+  
   For styles use the operator: ":<++>"
+  
   For transforms use         : ":<+>"
+  
   Brackets will still be needed for precedence for the read instance to take. eg:
     - FillColour 0 0 0 :<++> (StrokeWidth 1 :<++> StrokeColour 0.5 0.5 0.5) 
