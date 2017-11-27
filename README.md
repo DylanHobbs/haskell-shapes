@@ -3,6 +3,11 @@
 Assignment 1 - Combining the Shape eDSL with two web eDSL languages we saw (Scotty and Blaze) to produce a web application capable of delivering SVG objects.
 
 ### Usage
+ - stack init
+ - stack build
+ - stack exec shapesSVG
+ - Navigate to "http://localhost:3000/shapes"
+
  A drawing is of the form [(styles, transforms, shapes)]
  Entering this into the text box will output a SVG or just press go for an example.
 
